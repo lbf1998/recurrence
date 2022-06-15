@@ -23,6 +23,34 @@ def initialize_weights_he(m):
             torch.nn.init.constant_(m.bias, 0)
 
 
+class deta_0(nn.Module):
+    def __init__(self, state_embedding_dim, hidden_dim=256, out_dim=256):
+        super(deta_0, self).__init__()
+        self.deta_0_net = nn.Sequential(
+            nn.Linear(state_embedding_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, out_dim),
+            nn.Sigmoid()
+        )
+
+    def forward(self, state_embedding):
+        return self.deta_0_net(state_embedding)
+
+
+class deta_i(nn.Module):
+    def __init__(self, input_channels, hidden_dim=256, out_dim=256):
+        super(deta_i, self).__init__()
+        self.data_i_net = nn.Sequential(
+            nn.Linear(input_channels, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, out_dim),
+            nn.ReLU()
+        )
+
+    def forward(self, state_quantile_embedding):
+        return self.deta_i_net(state_quantile_embedding)
+
+
 class StateEmbedding(nn.Module):
     def __init__(self, num_channels, embedding_dim=7 * 7 * 64):
         super(StateEmbedding, self).__init__()
@@ -246,8 +274,9 @@ class iqn(nn.Module):
         # self.att_1 = AttModel(n_agent, hidden_dim, hidden_dim, hidden_dim)
         # self.att_2 = AttModel(n_agent, hidden_dim, hidden_dim, hidden_dim)
         # self.q_net = Q_Net(hidden_dim, num_actions)
-        self.cnn_net = CNN(num_inputs)
+        self.cnn_net = StateEmbedding(num_inputs)
         self.cosine_net = CosineEmbeddingNetwork(num_cosines=num_cosines, embedding_dim=hidden_dim)
+        self.deta0_net = deta_0()
         self.q_net = Quantile_Net(hidden_dim, num_actions)
 
     def forward(self, state, tau=None):
@@ -262,6 +291,7 @@ class iqn(nn.Module):
         if tau is None:
             tau, norm_opt = get_optimistic(state_emb.cpu().detach().numpy()[0])
         tau_embeeding = self.cosine_net(torch.tensor(tau).cuda())
+
         q = self.q_net(state_emb, tau_embeeding)
 
         return q, norm_opt
