@@ -63,8 +63,8 @@ class StateEmbedding(nn.Module):
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
             nn.ReLU(),
             Flatten(),
-            # nn.Linear(embedding_dim, 512),
-            # nn.ReLU(),
+            nn.Linear(embedding_dim, 512),
+            nn.ReLU(),
         ).apply(initialize_weights_he)
 
         self.embedding_dim = embedding_dim
@@ -276,7 +276,8 @@ class iqn(nn.Module):
         # self.q_net = Q_Net(hidden_dim, num_actions)
         self.cnn_net = StateEmbedding(num_inputs)
         self.cosine_net = CosineEmbeddingNetwork(num_cosines=num_cosines, embedding_dim=hidden_dim)
-        self.deta0_net = deta_0()
+        self.deta0_net = deta_0(hidden_dim, num_actions)
+        self.detai_net = deta_i(hidden_dim, num_actions)
         self.q_net = Quantile_Net(hidden_dim, num_actions)
 
     def forward(self, state, tau=None):
